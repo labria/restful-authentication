@@ -1,7 +1,8 @@
 require 'restful_authentication/rails_commands'
 class AuthenticatedGenerator < Rails::Generator::NamedBase
   default_options :skip_migration => false,
-                  :include_activation => false
+                  :include_activation => false,
+                  :use_certificates => false
                   
   attr_reader   :controller_name,
                 :controller_class_path,
@@ -115,7 +116,12 @@ class AuthenticatedGenerator < Rails::Generator::NamedBase
 
       m.template 'authenticated_test_helper.rb',
                   File.join('lib', 'authenticated_test_helper.rb')
-
+      if options[:use_certificates]
+        m.template 'quick_cert.rb',
+                    File.join('lib', 'quick_cert.rb')
+        m.template 'cert_config.rb',
+                  File.join('config/initializers', 'cert_config.rb')
+      end
       if @rspec
         m.template 'functional_spec.rb',
                     File.join('spec/controllers',
@@ -201,6 +207,12 @@ class AuthenticatedGenerator < Rails::Generator::NamedBase
           puts "    config.active_record.observers = :#{file_name}_observer"
           puts
         end
+        if options[:use_certificates]
+          puts "    map.get_cert '/get_my_cert', :controller => '#{model_controller_file_name}', :action => 'get_cert'"
+          puts
+          puts "    to let users get their certificate"
+          puts
+        end
         if options[:stateful]
           puts "Also, don't forget to install the acts_as_state_machine plugin and set your resource:"
           puts
@@ -257,6 +269,8 @@ class AuthenticatedGenerator < Rails::Generator::NamedBase
              "Generate signup 'activation code' confirmation via email") { |v| options[:include_activation] = true }
       opt.on("--stateful", 
              "Use acts_as_state_machine.  Assumes --include-activation") { |v| options[:include_activation] = options[:stateful] = true }
+      opt.on("--use-certificates", 
+             "Use certificates for authentication. Experimental!") { |v| options[:use_certificates] = true }
       opt.on("--rspec",
              "Force rspec mode (checks for RAILS_ROOT/spec by default)") { |v| options[:rspec] = true }
     end

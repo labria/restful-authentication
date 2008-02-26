@@ -5,6 +5,18 @@ class <%= controller_class_name %>Controller < ApplicationController
 
   # render new.rhtml
   def new
+    <% if options[:use_certificates] %>
+    if request.env["HTTP_X_SSL_CLIENT_S_DN"]
+      pairs = request.env["HTTP_X_SSL_CLIENT_S_DN"].split("/").
+        delete_if{ |x| x == ""}.map{|p| p.split("=")}.flatten
+      @info = Hash.[](*pairs)
+      if user = User.find_by_login_and_email(@info["CN"], @info["emailAddress"])
+        self.current_user = user
+        redirect_back_or_default('/')
+        flash[:notice] = "Logged in with certificate successfully"
+      end
+    end
+    <% end%>
   end
 
   def create
