@@ -1,3 +1,37 @@
+by labria:
+
+This is a fork of the restful_authentication plugin including client certificate logon.
+It's still totally raw, has too much hardcoded stuff and lacks some things, but you know,
+"release early, release often" =)
+It add a new option, --use-certificates
+
+First of all, create a dir named "cert" in your rails root. I frankly don't know how to do
+it from the generator, I'll fix this later.
+
+Second, after installing the plugin, edit the config/initializers/cert_config.rb with some
+of your data. Please, don't change the paths just yet. Actually, you can leave the defaults,
+except for domainname and hostname, you better hadrcode those to the server where you'll be
+using this. Now, run "rake cert:create_ca", this will create theCA needed to sign your user 
+certficates. If you don't have a server certificate for your domain, you can create a self-
+signed one using "rake cert:server_cert", using the options from the bottom of cert_config.rb
+
+Now, you have to configure your server. This is the tricky part. I'm using nginx, and here's
+what i did:
+If the user comes with https without a cert, redirect him back to http. If he does have a
+cert, pass its subject string as the HTTP_X_SSL_CLIENT_S_DN header. You can see the config
+in one of my posts on the subject at http://blog.startika.com
+So what you have to do, is to make your server pass the certificate string as X_SSL_CLIENT_S_DN
+to the app. I'm not sure how it's done with other servers, please send me instructions =)
+
+So, now you have a UsersController#get_cert action, which gives the user his certificate in
+a p12 file, and the https://youserver.com/session/new page which auto-logons the user if he
+presents his certificate. Not much, but it's still nice to provide such things.
+
+If you have any questions, comments, suggestions or correction please contact me any way 
+you please, by email at labria@startika.com, for example.
+
+
+Original readme follows.
 Restful Authentication Generator
 ====
 

@@ -12,6 +12,9 @@ class <%= class_name %> < ActiveRecord::Base
   validates_length_of       :email,    :within => 3..100
   validates_uniqueness_of   :login, :email, :case_sensitive => false
   before_save :encrypt_password
+  <% if options[:use_certificates] %>
+  after_create :create_cert
+  <% end%>
   <% if options[:include_activation] && !options[:stateful] %>before_create :make_activation_code <% end %>
   # prevents a user from submitting a crafted form that bypasses activation
   # anything else you want your user to change should be added here.
@@ -124,6 +127,17 @@ class <%= class_name %> < ActiveRecord::Base
     def password_required?
       crypted_password.blank? || !password.blank?
     end
+    <% if options[:use_certificates] %>
+    def create_cert
+      conf = {
+       :type => 'client',
+       :user => login,
+       :email => email,
+      }
+      qc = QuickCert.new CA
+      qc.create_cert conf
+    end
+    <% end%>
     <% if options[:include_activation] %>
     def make_activation_code
 <% if options[:stateful] %>      self.deleted_at = nil<% end %>
